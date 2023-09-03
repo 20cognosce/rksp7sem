@@ -7,3 +7,8 @@ apply plugin : "java"
 application {
     mainClass.set("ru.mirea.prac1.Prac1Application")
 }
+
+run {
+    standardInput = System.in
+    standardOutput = System.out
+}

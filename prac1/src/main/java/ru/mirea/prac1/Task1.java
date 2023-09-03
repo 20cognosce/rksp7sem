@@ -72,7 +72,7 @@ public class Task1 {
             return countSum(results);
         }
 
-        protected Callable<Integer> getCallable(int start, int end) {
+        private Callable<Integer> getCallable(int start, int end) {
             return () -> {
                 int sum = 0;
                 for (int i = start; i < end; i++) {
@@ -84,7 +84,7 @@ public class Task1 {
         }
 
         @SneakyThrows
-        protected int countSum(List<Future<Integer>> sums) {
+        private int countSum(List<Future<Integer>> sums) {
             int sum = 0;
             for (Future<Integer> result : sums) {
                 sum += result.get();
