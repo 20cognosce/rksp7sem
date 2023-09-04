@@ -2,10 +2,13 @@ package ru.mirea.prac1.task3;
 
 import lombok.SneakyThrows;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class FileGenerator {
     private final AtomicLong idCounter = new AtomicLong(0);
+    private final ExecutorService executorService = Executors.newFixedThreadPool(5);
     private final FileQueue fileQueue;
 
     public FileGenerator(FileQueue fileQueue) {
@@ -13,20 +16,18 @@ public class FileGenerator {
     }
 
     @SneakyThrows
-    public void generate(String extension, Integer sizeKB) {
+    public void generate(ExtensionEnum extension, Integer sizeKB) {
         if (sizeKB < 10 || sizeKB > 100) {
             System.out.println("Illegal file size");
             return;
         }
 
-        CustomFile file;
-        switch (extension) {
-            case "JSON" -> file = new CustomFile("file" + idCounter.incrementAndGet() + ".json", sizeKB);
-            case "XML" -> file = new CustomFile("file" + idCounter.incrementAndGet() + ".xml", sizeKB);
-            case "XLS" -> file = new CustomFile("file" + idCounter.incrementAndGet() + ".xls", sizeKB);
-            default -> throw new IllegalArgumentException("Illegal extension");
-        }
+        executorService.submit(getGenerateFileTask(extension, sizeKB));
+    }
 
-        fileQueue.produce(file);
+    private Runnable getGenerateFileTask(ExtensionEnum extension, Integer sizeKB) {
+        return () -> fileQueue.publish(
+                new CustomFile("file" + idCounter.incrementAndGet(), extension, sizeKB)
+        );
     }
 }

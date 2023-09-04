@@ -1,12 +1,13 @@
 package ru.mirea.prac1;
 
 import lombok.SneakyThrows;
+import ru.mirea.prac1.task3.ExtensionEnum;
 import ru.mirea.prac1.task3.FileGenerator;
 import ru.mirea.prac1.task3.FileHandler;
 import ru.mirea.prac1.task3.FileQueue;
-import ru.mirea.prac1.task3.JsonFileHandler;
-import ru.mirea.prac1.task3.XlsFileHandler;
-import ru.mirea.prac1.task3.XmlFileHandler;
+import ru.mirea.prac1.task3.handlers.JsonFileHandler;
+import ru.mirea.prac1.task3.handlers.XlsFileHandler;
+import ru.mirea.prac1.task3.handlers.XmlFileHandler;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,10 +17,10 @@ import java.util.Scanner;
 public class Task3 {
     public static final Path BASEDIR = Path.of(System.getProperty("user.dir") + "/src/main/resources/static");
 
-    public static final Map<Integer, String> mapExtension = Map.of(
-            1, "JSON",
-            2, "XML",
-            3, "XLS");
+    public static final Map<Integer, ExtensionEnum> mapExtension = Map.of(
+            1, ExtensionEnum.JSON,
+            2, ExtensionEnum.XML,
+            3, ExtensionEnum.XLS);
 
     @SneakyThrows
     Task3() {
@@ -31,23 +32,35 @@ public class Task3 {
     public void run() {
         FileQueue fileQueue = new FileQueue();
         FileGenerator fileGenerator = new FileGenerator(fileQueue);
-        FileHandler fileHandlerJSON = new JsonFileHandler(fileQueue);
-        FileHandler fileHandlerXML = new XmlFileHandler(fileQueue);
-        FileHandler fileHandlerXLS = new XlsFileHandler(fileQueue);
+        FileHandler fileHandlerJSON = new JsonFileHandler();
+        FileHandler fileHandlerXML = new XmlFileHandler();
+        FileHandler fileHandlerXLS = new XlsFileHandler();
+        fileQueue.subscribe(fileHandlerJSON);
+        fileQueue.subscribe(fileHandlerXML);
+        fileQueue.subscribe(fileHandlerXLS);
 
         Scanner scanner = new Scanner(System.in);
-
+        System.out.println("Вводите два числа в одну строку через пробел.");
         System.out.println("""
-                Тип файла:\s
+                Первое число - тип файла:\s
                 1. JSON\s
                 2. XML\s
                 3. XLS\s
                 """);
+        System.out.println("Второе число - размер файла (от 10 до 100 КБ)");
 
-        var extensionNumber = Integer.parseInt(scanner.nextLine());
-        System.out.println("Размер файла (от 10 до 100 КБ)");
-        var size = Integer.parseInt(scanner.nextLine());
+        boolean flag = true;
+        while(scanner.hasNext()) {
+            var line = scanner.nextLine().split(" ");
 
-        fileGenerator.generate(mapExtension.get(extensionNumber), size);
+            if (flag) {
+                System.out.println();
+                flag = false;
+            }
+
+            var extensionNumber = Integer.parseInt(line[0]);
+            var size = Integer.parseInt(line[1]);
+            fileGenerator.generate(mapExtension.get(extensionNumber), size);
+        }
     }
 }
