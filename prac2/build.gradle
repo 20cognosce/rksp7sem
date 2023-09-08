@@ -1,1 +1,18 @@
+plugins {
+    id "application"
+}
 
+apply plugin : "java"
+
+application {
+    mainClass.set("ru.mirea.prac2.Prac2Application")
+}
+
+run {
+    standardInput = System.in
+    standardOutput = System.out
+}
+
+dependencies {
+    implementation group: 'commons-io', name: 'commons-io', version: '2.13.0'
+}
