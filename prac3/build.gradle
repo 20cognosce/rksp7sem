@@ -1,0 +1,18 @@
+plugins {
+    id "application"
+}
+
+apply plugin : "java"
+
+application {
+    mainClass.set("ru.mirea.prac3.Prac3Application")
+}
+
+run {
+    standardInput = System.in
+    standardOutput = System.out
+}
+
+dependencies {
+    implementation 'io.reactivex.rxjava3:rxjava:3.1.8'
+}
