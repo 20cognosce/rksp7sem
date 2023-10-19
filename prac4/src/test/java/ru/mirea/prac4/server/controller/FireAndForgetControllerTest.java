@@ -42,24 +42,24 @@ public class FireAndForgetControllerTest {
     public void createMarketRequestShouldSucceed() {
         MarketRequest marketRequest = new MarketRequest();
         marketRequest.setStock(new Stock(UUID.randomUUID(), "Apple", "AAPL", 100.0, 10L));
-        marketRequest.setAccount(new Account(UUID.randomUUID(), new ArrayList<>(), 10000.0));
+        marketRequest.setAccount(new Account(UUID.randomUUID(), "name", new ArrayList<>(), 10000.0));
 
         Mockito.when(marketRequestRepository.save(marketRequest)).thenReturn(marketRequest);
-        Mono<Void> result = fireAndForgetController.createMarketRequest(marketRequest);
+        Mono<Void> result = fireAndForgetController.createBuyMarketRequest(marketRequest);
     }
 
     @Test
     public void createMarketRequestShouldHandleExceptions() {
         MarketRequest marketRequest = new MarketRequest();
         Mockito.when(marketRequestRepository.save(marketRequest)).thenThrow(new RuntimeException("Test Exception"));
-        assertThrows(RuntimeException.class, () -> fireAndForgetController.createMarketRequest(marketRequest));
+        assertThrows(RuntimeException.class, () -> fireAndForgetController.createBuyMarketRequest(marketRequest));
     }
 
     @Test
     public void processMarketRequestShouldSucceed() {
         MarketRequest marketRequest = new MarketRequest();
         var stock = new Stock(UUID.randomUUID(), "Apple", "AAPL", 100.0, 10L);
-        var account = new Account(UUID.fromString("test_uuid"), new ArrayList<>(), 10000.0);
+        var account = new Account(UUID.fromString("test_uuid"), "name", new ArrayList<>(), 10000.0);
         marketRequest.setStock(stock);
         marketRequest.setAccount(account);
 
@@ -76,7 +76,7 @@ public class FireAndForgetControllerTest {
     public void processMarketRequestShouldHandleExceptions() {
         MarketRequest marketRequest = new MarketRequest();
         marketRequest.setStock(new Stock(UUID.randomUUID(), "Tesla", "TSLA", 200.0, 5L));
-        marketRequest.setAccount(new Account(UUID.randomUUID(), new ArrayList<>(), 5000.0));
+        marketRequest.setAccount(new Account(UUID.randomUUID(), "name", new ArrayList<>(), 5000.0));
 
         Mockito.when(stockRepository.findByTicker("TSLA")).thenThrow(new EntityNotFoundException("Stock not found"));
 

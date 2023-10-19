@@ -10,7 +10,8 @@ CREATE TABLE stock
 
 CREATE TABLE account
 (
-    uuid  UUID NOT NULL,
+    uuid  UUID         NOT NULL,
+    name  VARCHAR(255) NOT NULL UNIQUE,
     funds DOUBLE PRECISION,
     CONSTRAINT pk_account PRIMARY KEY (uuid)
 );

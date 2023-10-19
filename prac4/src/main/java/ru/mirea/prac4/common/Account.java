@@ -7,8 +7,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -31,6 +29,9 @@ public class Account {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "uuid", nullable = false)
     private UUID uuid;
+
+    @Column(name = "name")
+    private String name;
 
     @OneToMany(mappedBy = "account", fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.MERGE})
     private List<Account2Stock> account2Stocks;

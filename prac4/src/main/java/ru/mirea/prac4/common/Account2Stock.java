@@ -1,5 +1,6 @@
 package ru.mirea.prac4.common;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -7,10 +8,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.UUID;
 
@@ -25,6 +26,7 @@ public class Account2Stock {
     @Column(name = "uuid", nullable = false)
     private UUID uuid;
 
+    @JsonIgnore
     @JoinColumn(name = "account_uuid", referencedColumnName = "uuid")
     @ManyToOne
     private Account account;

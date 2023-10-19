@@ -1,8 +1,10 @@
 package ru.mirea.prac4.client.config;
 
+import io.rsocket.frame.decoder.PayloadDecoder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.rsocket.RSocketRequester;
+import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 import reactor.util.retry.Retry;
 
@@ -12,7 +14,7 @@ import java.time.Duration;
 public class ClientConfiguration {
 
     @Bean
-    public RSocketRequester getRSocketRequester(){
+    public RSocketRequester getRSocketRequester() {
         RSocketRequester.Builder builder = RSocketRequester.builder();
 
         return builder
