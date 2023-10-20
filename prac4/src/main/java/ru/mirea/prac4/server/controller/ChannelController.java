@@ -1,8 +1,5 @@
 package ru.mirea.prac4.server.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import io.rsocket.util.DefaultPayload;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -12,12 +9,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import ru.mirea.prac4.common.MarketRequest;
+import ru.mirea.prac4.common.dto.SellMarketRequestDto;
+import ru.mirea.prac4.common.util.JsonUtil;
 import ru.mirea.prac4.server.repo.AccountRepository;
 import ru.mirea.prac4.server.repo.MarketRequestRepository;
 import ru.mirea.prac4.server.repo.StockRepository;
 
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 @RequiredArgsConstructor
 @Controller
@@ -27,13 +26,13 @@ public class ChannelController {
     private final StockRepository stockRepository;
     private final AccountRepository accountRepository;
 
-    @MessageMapping("sell-market-request")
-    public Flux<String> createSellMarketRequest(Publisher<MarketRequest> marketRequests) {
+    @MessageMapping("sell-market-requests")
+    public Flux<String> createSellMarketRequest(Publisher<String> marketRequests) {
         return Flux.from(marketRequests)
-                .doOnNext(marketRequest -> {
-                    System.out.println("[LOG] sell-market-request received: " + marketRequest);
-                })
-                .map(this::processMarketRequest);
+                .doOnNext(marketRequest -> System.out.println("[LOG] sell-market-request received: " + marketRequest))
+                .map(e -> JsonUtil.readJson(e, MarketRequest.class))
+                .map(this::processMarketRequest)
+                .delayElements(Duration.ofSeconds(3));
     }
 
     @SneakyThrows
@@ -46,18 +45,22 @@ public class ChannelController {
                 .orElseThrow(() -> new EntityNotFoundException("Stock with ticker " + ticker + " not found"));
         var account = accountRepository.findByName(accountName)
                 .orElseThrow(() -> new EntityNotFoundException("Account with uuid " + accountName + " not found"));
-        var account2stock = account.getAccount2Stocks().stream()
+        var account2stockList = account.getAccount2Stocks().stream()
                 .filter(account2Stock -> ticker.equals(account2Stock.getStock().getTicker()))
-                .collect(Collectors.collectingAndThen(Collectors.toList(), list -> {
-                    if (list.size() != 1) {
-                        throw new IllegalArgumentException("Database inconsistency error");
-                    }
-                    return list.get(0);
-                }));
+                .toList();
+
+        if (account2stockList.size() > 1) {
+            throw new IllegalArgumentException("Database inconsistency error");
+        }
+        if (account2stockList.size() == 0) {
+            return JsonUtil.writeJson(new SellMarketRequestDto(0, marketRequest.getStock().getTicker(), 0d));
+        }
+
+        var account2stock = account2stockList.get(0);
 
         marketRequest.setAccount(account);
         marketRequest.setStock(stock);
-
+        marketRequest.setDateTime(LocalDateTime.now());
         stock.setAmount(stock.getAmount() + marketRequest.getAmount());
         account2stock.setAmount(account2stock.getAmount() - marketRequest.getAmount());
         account.setFunds(account.getFunds() + marketRequest.getAmount() * stock.getPrice());
@@ -66,10 +69,10 @@ public class ChannelController {
         accountRepository.save(account);
         marketRequestRepository.save(marketRequest);
 
-        return new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(
-                Map.of("Stocks sold", marketRequest.getAmount(),
-                        "Ticker", marketRequest.getStock().getTicker(),
-                        "Total price", marketRequest.getAmount() * stock.getPrice())
+        return JsonUtil.writeJson(new SellMarketRequestDto(
+                marketRequest.getAmount(),
+                marketRequest.getStock().getTicker(),
+                marketRequest.getAmount() * stock.getPrice())
         );
     }
 }

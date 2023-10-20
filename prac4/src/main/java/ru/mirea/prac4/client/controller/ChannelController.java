@@ -5,14 +5,17 @@ import org.reactivestreams.Publisher;
 import org.springframework.http.MediaType;
 import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import ru.mirea.prac4.common.Account;
 import ru.mirea.prac4.common.MarketRequest;
 import ru.mirea.prac4.common.Stock;
+import ru.mirea.prac4.common.dto.SellMarketRequestDto;
+import ru.mirea.prac4.common.dto.TickerListDto;
+import ru.mirea.prac4.common.util.JsonUtil;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -20,9 +23,9 @@ import java.util.UUID;
 public class ChannelController {
     private final RSocketRequester rSocketRequester;
 
-    @PostMapping(value = "/sell-market-request", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Publisher<String> createSellMarketRequest() {
-        var data = Flux.just("SBER", "YNDX", "GAZP")
+    @PostMapping(value = "/sell-market-requests", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Publisher<SellMarketRequestDto> createSellMarketRequest(@RequestBody TickerListDto tickerListDto) {
+        var data = Flux.fromIterable(tickerListDto.getTickers())
                 .map(ticker -> {
                     var account = new Account();
                     account.setName("one");
@@ -30,13 +33,14 @@ public class ChannelController {
                     var stock = new Stock();
                     stock.setTicker(ticker);
 
-                    return new MarketRequest(UUID.randomUUID(), account, stock, 1, LocalDateTime.now());
+                    return JsonUtil.writeJson(new MarketRequest(UUID.randomUUID(), account, stock, 1, null));
                 })
-                .delayElements(Duration.ofMillis(1000));
+                .delayElements(Duration.ofSeconds(3));
 
         return rSocketRequester
                 .route("sell-market-requests")
                 .data(data)
-                .retrieveFlux(String.class);
+                .retrieveFlux(String.class)
+                .map(e -> JsonUtil.readJson(e, SellMarketRequestDto.class));
     }
 }
